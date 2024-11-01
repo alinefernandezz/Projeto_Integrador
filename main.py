@@ -1,9 +1,20 @@
 from datetime import datetime, timezone
+import firebase_admin
 from flask import Flask, Response, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 import json
 import paho.mqtt.client as mqtt
+from firebase_admin import credentials
+from firebase_admin import db
 
+
+
+
+# Inicialize o Firebase com suas credenciais
+cred = credentials.Certificate("C:\Users\50805181890\Documents\firebase\projeto-integrador.json")  # ajuste o caminho conforme necessário
+firebase_admin.initialize_app(cred, {
+    'databaseURL': 'https://projeto-integrador-5fe0f-default-rtdb.firebaseio.com/'
+})
 # pip install paho-mqtt flask -> conexao com os sensorores
 
 # conexao com o database

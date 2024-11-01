@@ -162,7 +162,7 @@ df_selecionado = calcular_aqi(df_selecionado)
 def exibir_aqi():
     st.sidebar.header("Índice de Qualidade do Ar (AQI)")
     if not df_selecionado.empty:
-        # Verificar se existem valores válidos antes de exibir
+        #verificacao de valores validos
         if df_selecionado['AQI'].iloc[-1] != "Desconhecido":
             aqi_status, aqi_cor = df_selecionado.iloc[-1][['AQI', 'AQI_cor']]
             st.sidebar.markdown(f"<h2 style='color:{aqi_cor}'>AQI: {aqi_status}</h2>", unsafe_allow_html=True)
@@ -213,7 +213,7 @@ def Home():
 def graficos():
     st.title('Dashboard de Monitoramento')
     
-    aba1, aba2 = st.tabs(['Gráfico de Barras', 'Gráfico de Dispersão'])
+    aba1, aba2, aba3 = st.tabs(['Gráfico de Barras', 'Gráfico de Dispersão', 'Gráfico de Linha'])
 
     # Gráfico de Barras
     with aba1:
@@ -256,6 +256,24 @@ def graficos():
                 
             except Exception as e:
                 st.error(f"Erro ao criar o gráfico de dispersão: {e}")
+# Gráfico de Linha
+    with aba3:
+        if df_selecionado.empty:
+            st.write('Nenhum dado está disponível para gerar o gráfico de linha')
+        else:
+            try:
+                fig_linha = px.line(
+                    df_selecionado,
+                    x=colunaX,
+                    y=colunaY,
+                    title=f"Gráfico de Linha: {colunaX.capitalize()} vs {colunaY.capitalize()}",
+                    line_shape="linear",
+                    template="plotly_white"
+                )
+                st.plotly_chart(fig_linha, use_container_width=True)
+                
+            except Exception as e:
+                st.error(f"Erro ao criar o gráfico de linha: {e}")
 
 # Função para feedback e denúncias
 def feedback():
@@ -287,13 +305,40 @@ def main():
     with aba_feedback:
         feedback()
 
+# Função para enviar alerta por e-mail
+def enviar_email(alerta):
+    # Configurações do servidor SMTP
+    smtp_server = "smtp.gmail.com"
+    smtp_port = 587
+    email_usuario = "alinefernandesb89@gmail.com"  # Substitua pelo seu e-mail
+    email_senha = "Enila810721$"  # Substitua pela sua senha ou use um token
+
+    # Criar a mensagem
+    mensagem = MIMEMultipart()
+    mensagem["From"] = email_usuario
+    mensagem["To"] = email_usuario  # Pode ser enviado para o mesmo e-mail
+    mensagem["Subject"] = "Alerta de Qualidade do Ar"
+
+    # Adicionar o corpo do e-mail
+    mensagem.attach(MIMEText(alerta, "plain"))
+
+    try:
+        # Conectar ao servidor SMTP e enviar o e-mail
+        with smtplib.SMTP(smtp_server, smtp_port) as servidor:
+            servidor.starttls()  # Ativar criptografia TLS
+            servidor.login(email_usuario, email_senha)
+            servidor.send_message(mensagem)
+        print("E-mail enviado com sucesso!")
+    except Exception as e:
+        print(f"Erro ao enviar e-mail: {e}")
 
 # Função para exibir alertas e avisos
 def exibir_alertas():
+
     st.subheader("Alertas e Avisos")
-    st.write("### Alertas em Tempo Real")
+    st.write("### Alertas em Tempo Real"
+             )
     # criar logica para exibir alerta em tempo real
-    # mensagem de alertas ficticias
     alertas = [
         "Níveis de poluição elevados detectados na região central de São Paulo.",
         "Condições climáticas adversas previstas para os próximos dias: chuvas e vento forte.",
@@ -302,6 +347,7 @@ def exibir_alertas():
     
     for alerta in alertas:
         st.warning(alerta)  # Exibe cada alerta como uma mensagem de aviso
+        enviar_email(alerta)  # Envia o alerta por e-mail
 
 # Atualizar a função Home para incluir alertas
 def Home():
